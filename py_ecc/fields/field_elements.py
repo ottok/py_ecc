@@ -145,15 +145,23 @@ class FQ:
     def __rtruediv__(self: T_FQ, other: IntOrFQ) -> T_FQ:
         return self.__rdiv__(other)
 
+    def inv(self: T_FQ) -> T_FQ:
+        return type(self)(prime_field_inv(self.n, self.field_modulus))
+
     def __pow__(self: T_FQ, other: int) -> T_FQ:
-        if other == 0:
-            return type(self)(1)
-        elif other == 1:
-            return type(self)(self.n)
-        elif other % 2 == 0:
-            return (self * self) ** (other // 2)
-        else:
-            return ((self * self) ** int(other // 2)) * self
+        if other < 0:
+            return self.inv() ** (-other)
+        res = type(self)(1)
+        base = self
+        exp = other
+
+        while exp > 0:
+            if exp % 2 == 1:
+                res = res * base
+            base = base * base
+            exp //= 2
+
+        return res
 
     def __eq__(self: T_FQ, other: Any) -> bool:
         if isinstance(other, FQ):
@@ -290,14 +298,19 @@ class FQP:
         return self.__div__(other)
 
     def __pow__(self: T_FQP, other: int) -> T_FQP:
-        o = type(self)([1] + [0] * (self.degree - 1))
-        t = self
-        while other > 0:
-            if other & 1:
-                o = o * t
-            other >>= 1
-            t = t * t
-        return o
+        if other < 0:
+            return self.inv() ** (-other)
+        res = type(self)([1] + [0] * (self.degree - 1))
+        base = self
+        exp = other
+
+        while exp > 0:
+            if exp % 2 == 1:
+                res = res * base
+            base = base * base
+            exp //= 2
+
+        return res
 
     # Extended euclidean algorithm used to find the modular inverse
     def inv(self: T_FQP) -> T_FQP:

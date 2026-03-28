@@ -157,15 +157,23 @@ class FQ:
     def __rtruediv__(self: T_FQ, other: IntOrFQ) -> T_FQ:
         return self.__rdiv__(other)
 
+    def inv(self: T_FQ) -> T_FQ:
+        return type(self)(prime_field_inv(self.n, self.field_modulus))
+
     def __pow__(self: T_FQ, other: int) -> T_FQ:
-        if other == 0:
-            return type(self)(1)
-        elif other == 1:
-            return type(self)(self.n)
-        elif other % 2 == 0:
-            return (self * self) ** (other // 2)
-        else:
-            return ((self * self) ** int(other // 2)) * self
+        if other < 0:
+            return self.inv() ** (-other)
+        res = type(self)(1)
+        base = self
+        exp = other
+
+        while exp > 0:
+            if exp % 2 == 1:
+                res = res * base
+            base = base * base
+            exp //= 2
+
+        return res
 
     def __eq__(self: T_FQ, other: Any) -> bool:
         if isinstance(other, FQ):
